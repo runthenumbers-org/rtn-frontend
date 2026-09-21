@@ -54,6 +54,9 @@ npm run build
 
 Use `npm run format` to apply the repository formatting rules.
 
+Reusable form and feedback patterns are documented in
+[`docs/ui-conventions.md`](docs/ui-conventions.md).
+
 ## Route structure
 
 Route groups organize public account screens separately from workspace screens
