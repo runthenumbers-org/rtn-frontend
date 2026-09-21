@@ -1,36 +1,89 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# RTN Frontend
 
-## Getting Started
+The customer-facing RTN application for managing materials, planning batches,
+and understanding production costs.
 
-First, run the development server:
+## Requirements
+
+- Node.js 24 or newer
+- npm 11 or newer
+
+The supported Node.js version is recorded in `.nvmrc`. If you use `nvm`, run:
 
 ```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
+nvm install
+nvm use
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+## Local development
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+Install dependencies and create your local environment file:
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+```bash
+npm install
+cp .env.example .env.local
+npm run dev
+```
 
-## Learn More
+Open [http://localhost:3000](http://localhost:3000).
 
-To learn more about Next.js, take a look at the following resources:
+## Environment configuration
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+Environment files live at the project root, not inside `src/`.
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+- `.env.example` documents the variables expected by the application and is
+  safe to commit.
+- `.env.local` contains developer-specific values and must never be committed.
+- Variables prefixed with `NEXT_PUBLIC_` are included in the browser bundle at
+  build time. They must never contain secrets.
+- Server-only variables must not use the `NEXT_PUBLIC_` prefix.
+- Netlify should provide production values through its environment settings.
 
-## Deploy on Vercel
+No secrets are required by the current UI-only foundation. Runtime validation
+will be added when the first required integration variable is introduced.
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+## Quality commands
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+```bash
+npm run lint
+npm run typecheck
+npm run format:check
+npm run check
+npm run build
+```
+
+Use `npm run format` to apply the repository formatting rules.
+
+## Route structure
+
+Route groups organize public account screens separately from workspace screens
+without changing their URLs.
+
+```text
+src/app/
+├── (auth)/
+│   ├── sign-in/
+│   ├── sign-up/
+│   └── onboarding/
+├── (app)/
+│   ├── dashboard/
+│   ├── materials/
+│   │   ├── new/
+│   │   └── [materialId]/edit/
+│   ├── batches/
+│   │   ├── new/
+│   │   └── [batchId]/
+│   └── settings/
+├── globals.css
+├── layout.tsx
+└── page.tsx
+```
+
+The typed route catalogue is defined in `src/lib/routes.ts`. Authentication,
+authorization, and onboarding redirects are intentionally deferred until the
+relevant product and provider decisions are made.
+
+## Deployment
+
+The `master` branch deploys to Netlify at
+[rtnweb.netlify.app](https://rtnweb.netlify.app/).
