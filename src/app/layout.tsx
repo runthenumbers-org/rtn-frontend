@@ -13,11 +13,36 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
+  metadataBase: new URL(
+    process.env.NEXT_PUBLIC_APP_URL ?? "https://rtnweb.netlify.app",
+  ),
   title: {
-    default: "RTN",
+    default: "RTN — Production costing with clarity",
     template: "%s | RTN",
   },
-  description: "Plan materials, batches, and production costs with confidence.",
+  description:
+    "Turn material purchases, production quantities, packaging, and overheads into a clear cost per batch and cost per unit.",
+  openGraph: {
+    title: "RTN — Know what every product costs before you make it",
+    description:
+      "Plan materials, batches, and production costs in one clear workspace built for product businesses.",
+    type: "website",
+    images: [
+      {
+        url: "/og.png",
+        width: 1731,
+        height: 909,
+        alt: "RTN — Know what every product costs before you make it.",
+      },
+    ],
+  },
+  twitter: {
+    card: "summary_large_image",
+    title: "RTN — Know what every product costs before you make it",
+    description:
+      "Plan materials, batches, and production costs in one clear workspace built for product businesses.",
+    images: ["/og.png"],
+  },
 };
 
 export default function RootLayout({ children }: LayoutProps<"/">) {
