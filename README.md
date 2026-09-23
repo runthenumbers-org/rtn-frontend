@@ -67,7 +67,8 @@ src/app/
 ├── (auth)/
 │   ├── sign-in/
 │   ├── sign-up/
-│   ├── forgot-password/
+│   └── forgot-password/
+├── (onboarding)/
 │   └── onboarding/
 ├── (app)/
 │   ├── dashboard/
