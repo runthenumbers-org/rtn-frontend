@@ -67,6 +67,7 @@ src/app/
 ├── (auth)/
 │   ├── sign-in/
 │   ├── sign-up/
+│   ├── forgot-password/
 │   └── onboarding/
 ├── (app)/
 │   ├── dashboard/
@@ -85,6 +86,11 @@ src/app/
 The typed route catalogue is defined in `src/lib/routes.ts`. Authentication,
 authorization, and onboarding redirects are intentionally deferred until the
 relevant product and provider decisions are made.
+
+The account screens currently use the isolated adapter in
+`src/lib/auth/mock-auth.ts` to exercise validation, request states, and route
+transitions. It does not create a session or protect application routes. Replace
+the adapter and add server-side route enforcement as part of RTN-005.
 
 ## Deployment
 

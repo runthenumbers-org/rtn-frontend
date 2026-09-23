@@ -1,39 +1,39 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 
-import { SignUpForm } from "@/components/auth/sign-up-form";
+import { ForgotPasswordForm } from "@/components/auth/forgot-password-form";
 import { routes } from "@/lib/routes";
 
 export const metadata: Metadata = {
-  title: "Create an account",
-  description: "Create your RTN production-costing workspace.",
+  title: "Reset your password",
+  description: "Request password-reset instructions for your RTN account.",
 };
 
-export default function SignUpPage() {
+export default function ForgotPasswordPage() {
   return (
     <div>
       <p className="text-sm font-bold tracking-[0.14em] text-emerald-800 uppercase">
-        Get started
+        Account recovery
       </p>
       <h1 className="mt-4 text-4xl font-semibold tracking-[-0.04em] text-slate-950">
-        Create your account
+        Reset your password
       </h1>
       <p className="mt-4 leading-7 text-slate-600">
-        Set up your workspace and start building a clearer picture of every
-        batch.
+        Enter the email associated with your account. For your security, the
+        response will not confirm whether an account exists.
       </p>
 
       <div className="mt-8">
-        <SignUpForm />
+        <ForgotPasswordForm />
       </div>
 
       <p className="mt-8 text-center text-sm text-slate-600">
-        Already have an account?{" "}
+        Remember your password?{" "}
         <Link
           className="font-semibold text-emerald-800 hover:text-emerald-950 hover:underline focus-visible:rounded focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-emerald-700"
           href={routes.signIn}
         >
-          Sign in
+          Return to sign in
         </Link>
       </p>
     </div>

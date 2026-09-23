@@ -77,12 +77,15 @@ interface SharedFieldProps {
 export interface TextFieldProps
   extends
     Omit<InputHTMLAttributes<HTMLInputElement>, "size">,
-    SharedFieldProps {}
+    SharedFieldProps {
+  endAdornment?: ReactNode;
+}
 
 export function TextField({
   "aria-describedby": ariaDescribedBy,
   className,
   description,
+  endAdornment,
   error,
   id: suppliedId,
   label,
@@ -95,14 +98,28 @@ export function TextField({
   return (
     <div className="grid gap-2">
       <FieldLabel id={id} label={label} required={required} />
-      <input
-        {...inputProps}
-        aria-describedby={describedBy(id, description, error, ariaDescribedBy)}
-        aria-invalid={error ? true : undefined}
-        className={[controlClassName, className].filter(Boolean).join(" ")}
-        id={id}
-        required={required}
-      />
+      <div className="relative">
+        <input
+          {...inputProps}
+          aria-describedby={describedBy(
+            id,
+            description,
+            error,
+            ariaDescribedBy,
+          )}
+          aria-invalid={error ? true : undefined}
+          className={[controlClassName, endAdornment ? "pr-14" : "", className]
+            .filter(Boolean)
+            .join(" ")}
+          id={id}
+          required={required}
+        />
+        {endAdornment ? (
+          <div className="absolute inset-y-0 right-1 flex items-center">
+            {endAdornment}
+          </div>
+        ) : null}
+      </div>
       <FieldMessage
         description={description}
         error={error}
