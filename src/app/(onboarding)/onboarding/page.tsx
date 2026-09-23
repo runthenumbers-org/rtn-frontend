@@ -1,5 +1,7 @@
 import type { Metadata } from "next";
 
+import { BusinessDetailsForm } from "@/components/onboarding/business-details-form";
+
 export const metadata: Metadata = {
   title: "Set up your business",
   description: "Configure the essential details for your RTN workspace.",
@@ -18,6 +20,7 @@ export default function OnboardingPage() {
         Tell us how your business operates so RTN can present costs and
         production information using the right defaults.
       </p>
+      <BusinessDetailsForm />
     </section>
   );
 }
