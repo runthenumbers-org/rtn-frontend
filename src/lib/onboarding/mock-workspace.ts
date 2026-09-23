@@ -101,3 +101,10 @@ export function saveMockWorkspace(workspace: MockWorkspace) {
   cachedWorkspace = workspace;
   listeners.forEach((listener) => listener());
 }
+
+export function clearMockWorkspace() {
+  window.sessionStorage.removeItem(storageKey);
+  cachedRawValue = null;
+  cachedWorkspace = null;
+  listeners.forEach((listener) => listener());
+}

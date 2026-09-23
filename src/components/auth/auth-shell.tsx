@@ -6,6 +6,12 @@ import { routes } from "@/lib/routes";
 export function AuthShell({ children }: { children: ReactNode }) {
   return (
     <main className="min-h-screen bg-[#f5f2e9] lg:grid lg:grid-cols-[minmax(22rem,0.82fr)_minmax(32rem,1.18fr)]">
+      <a
+        className="fixed top-3 left-3 z-50 -translate-y-20 rounded-md bg-slate-950 px-4 py-2 text-sm font-medium text-white transition focus:translate-y-0 focus:outline-none"
+        href="#auth-content"
+      >
+        Skip to account form
+      </a>
       <section className="relative hidden overflow-hidden bg-[#071c16] px-10 py-12 text-white lg:flex lg:flex-col lg:justify-between xl:px-16 xl:py-16">
         <div
           className="absolute -top-32 -left-32 size-96 rounded-full bg-lime-300/15 blur-3xl"
@@ -52,7 +58,11 @@ export function AuthShell({ children }: { children: ReactNode }) {
         </ul>
       </section>
 
-      <section className="flex min-h-screen flex-col">
+      <section
+        className="flex min-h-screen flex-col"
+        id="auth-content"
+        tabIndex={-1}
+      >
         <header className="flex h-20 items-center justify-between px-5 sm:px-8 lg:justify-end lg:px-12">
           <Link
             className="rounded-md text-2xl font-bold tracking-[-0.06em] text-emerald-950 focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-emerald-800 lg:hidden"

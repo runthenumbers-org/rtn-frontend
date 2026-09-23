@@ -31,6 +31,8 @@ export async function signIn(input: SignInInput) {
   if (email === "error@example.com") {
     throw new AuthError("UNEXPECTED");
   }
+
+  startMockSession("returning");
 }
 
 export async function signUp(input: SignUpInput) {
@@ -45,9 +47,12 @@ export async function signUp(input: SignUpInput) {
   if (email === "error@example.com") {
     throw new AuthError("UNEXPECTED");
   }
+
+  startMockSession("new");
 }
 
 export async function requestPasswordReset(email: string) {
   void email;
   await pause();
 }
+import { startMockSession } from "@/lib/auth/mock-session";

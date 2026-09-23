@@ -1,10 +1,12 @@
 "use client";
 
 import Link from "next/link";
-import { usePathname } from "next/navigation";
+import { usePathname, useRouter } from "next/navigation";
 import { useEffect, useRef, useState, type ReactNode } from "react";
 
 import { routes } from "@/lib/routes";
+import { clearMockSession } from "@/lib/auth/mock-session";
+import { clearMockWorkspace } from "@/lib/onboarding/mock-workspace";
 
 const navigation = [
   { href: routes.dashboard, label: "Dashboard" },
@@ -57,6 +59,7 @@ function WorkspaceNavigation({ onNavigate }: NavigationProps) {
 }
 
 export function AppShell({ children }: AppShellProps) {
+  const router = useRouter();
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const dialogRef = useRef<HTMLDialogElement>(null);
   const menuButtonRef = useRef<HTMLButtonElement>(null);
@@ -96,6 +99,13 @@ export function AppShell({ children }: AppShellProps) {
     setIsMenuOpen(false);
   }
 
+  function signOut() {
+    clearMockSession();
+    clearMockWorkspace();
+    closeMenu();
+    router.replace(routes.signIn);
+  }
+
   return (
     <div className="min-h-screen bg-slate-50">
       <a
@@ -119,27 +129,36 @@ export function AppShell({ children }: AppShellProps) {
             </span>
           </Link>
 
-          <button
-            className="inline-flex size-11 items-center justify-center rounded-lg border border-slate-300 bg-white text-slate-700 transition hover:bg-slate-50 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-emerald-700 md:hidden"
-            type="button"
-            aria-controls="mobile-navigation"
-            aria-expanded={isMenuOpen}
-            aria-label="Open navigation menu"
-            onClick={() => setIsMenuOpen(true)}
-            ref={menuButtonRef}
-          >
-            <svg
-              className="size-5"
-              viewBox="0 0 24 24"
-              fill="none"
-              stroke="currentColor"
-              strokeLinecap="round"
-              strokeWidth="2"
-              aria-hidden="true"
+          <div className="flex items-center gap-2">
+            <button
+              className="hidden min-h-11 items-center rounded-lg px-4 text-sm font-semibold text-slate-600 transition hover:bg-slate-100 hover:text-slate-950 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-emerald-700 md:inline-flex"
+              type="button"
+              onClick={signOut}
             >
-              <path d="M4 6h16M4 12h16M4 18h16" />
-            </svg>
-          </button>
+              Sign out
+            </button>
+            <button
+              className="inline-flex size-11 items-center justify-center rounded-lg border border-slate-300 bg-white text-slate-700 transition hover:bg-slate-50 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-emerald-700 md:hidden"
+              type="button"
+              aria-controls="mobile-navigation"
+              aria-expanded={isMenuOpen}
+              aria-label="Open navigation menu"
+              onClick={() => setIsMenuOpen(true)}
+              ref={menuButtonRef}
+            >
+              <svg
+                className="size-5"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                strokeLinecap="round"
+                strokeWidth="2"
+                aria-hidden="true"
+              >
+                <path d="M4 6h16M4 12h16M4 18h16" />
+              </svg>
+            </button>
+          </div>
         </div>
       </header>
 
@@ -188,6 +207,15 @@ export function AppShell({ children }: AppShellProps) {
           </div>
           <div className="mt-5">
             <WorkspaceNavigation onNavigate={closeMenu} />
+          </div>
+          <div className="mt-auto border-t border-slate-200 pt-5">
+            <button
+              className="inline-flex min-h-11 w-full items-center rounded-lg px-3 py-2 text-left text-sm font-medium text-slate-700 transition hover:bg-slate-100 hover:text-slate-950 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-emerald-700"
+              type="button"
+              onClick={signOut}
+            >
+              Sign out
+            </button>
           </div>
         </div>
       </dialog>

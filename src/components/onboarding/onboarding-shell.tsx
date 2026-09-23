@@ -20,6 +20,12 @@ const setupSteps = [
 export function OnboardingShell({ children }: OnboardingShellProps) {
   return (
     <main className="min-h-screen bg-[#f5f2e9] text-slate-950">
+      <a
+        className="fixed top-3 left-3 z-50 -translate-y-20 rounded-md bg-slate-950 px-4 py-2 text-sm font-medium text-white transition focus:translate-y-0 focus:outline-none"
+        href="#onboarding-content"
+      >
+        Skip to business details
+      </a>
       <header className="border-b border-slate-950/10 bg-[#f5f2e9]/95 backdrop-blur">
         <div className="mx-auto flex h-20 max-w-7xl items-center justify-between px-5 sm:px-8 lg:px-10">
           <p className="text-2xl font-bold tracking-[-0.06em] text-emerald-950">
@@ -101,7 +107,11 @@ export function OnboardingShell({ children }: OnboardingShellProps) {
           </div>
         </aside>
 
-        <section className="flex items-start justify-center px-5 py-10 sm:px-8 sm:py-14 lg:px-12 lg:py-16">
+        <section
+          className="flex items-start justify-center px-5 py-10 sm:px-8 sm:py-14 lg:px-12 lg:py-16"
+          id="onboarding-content"
+          tabIndex={-1}
+        >
           <div className="w-full max-w-2xl rounded-2xl border border-slate-950/10 bg-white p-6 shadow-[0_24px_60px_-40px_rgba(15,23,42,0.45)] sm:p-9 lg:p-10">
             {children}
           </div>

@@ -1,6 +1,6 @@
 import type { Metadata } from "next";
 
-import { FirstTimeDashboard } from "@/components/dashboard/first-time-dashboard";
+import { DashboardOverview } from "@/components/dashboard/dashboard-overview";
 
 export const metadata: Metadata = {
   title: "Dashboard",
@@ -8,5 +8,5 @@ export const metadata: Metadata = {
 };
 
 export default function DashboardPage() {
-  return <FirstTimeDashboard />;
+  return <DashboardOverview />;
 }
