@@ -118,6 +118,40 @@ batch totals, yields, or unit costs.
 An empty catalogue produces the first-time state. An unknown identifier produces
 the batch-not-found state without exposing storage or ownership details.
 
+## Batch creation and calculation boundary
+
+The batch builder submits identity, a planned date, target output, and one or
+more unique material lines. Each line references a material identifier and
+supplies a positive decimal quantity plus a unit from the same measurement
+dimension as that material's purchase unit. Count quantities are whole numbers.
+Material ownership, current prices, unit compatibility, reference uniqueness,
+and all values must be validated again by the production API.
+
+The mock calculation adapter accepts decimal strings and uses exact rational
+arithmetic backed by integers. It never uses display-formatted currency or
+ordinary binary floating-point as an authoritative input. Unit conversion uses
+the central catalogue's integer base-unit factors (grams, millilitres, and
+items). Its precision policy is:
+
+- purchase prices, pack quantities, formulation quantities, and target output
+  are parsed from unformatted decimal strings;
+- exact values are retained throughout conversion, multiplication, summation,
+  and division;
+- currency subtotals and the batch total use round-half-up to 2 decimal places;
+- individual line costs and cost per output unit use round-half-up to 4 decimal
+  places, while currency UI may retain at least 2 trailing decimal places;
+- count-based quantities (`item`) must be whole numbers; mass and volume may be
+  fractional;
+- the authoritative total is rounded once from the exact sum, rather than
+  summing independently rounded display lines.
+
+Mock submission persists the returned calculation strings with the batch. The
+catalogue and detail views format those saved results and do not calculate a
+competing total. A future production endpoint must resolve material prices and
+perform this calculation server-side in an atomic create operation. Its response
+should return the complete saved batch view model and authoritative decimal
+strings; browser-side live feedback is advisory only.
+
 ## Error response
 
 API errors should use one predictable structure:

@@ -22,12 +22,47 @@ export const materialUnitGroups = [
 export type MaterialUnit =
   (typeof materialUnitGroups)[number]["units"][number]["value"];
 
+export interface MaterialUnitOption {
+  abbreviation: string;
+  label: string;
+  value: MaterialUnit;
+}
+
+export const materialUnits: readonly MaterialUnitOption[] =
+  materialUnitGroups.flatMap(
+    (group) => group.units as readonly MaterialUnitOption[],
+  );
+
+export type MeasurementDimension = "Mass" | "Volume" | "Count";
+
+const unitDefinitions: Record<
+  MaterialUnit,
+  { baseUnits: bigint; dimension: MeasurementDimension }
+> = {
+  g: { baseUnits: 1n, dimension: "Mass" },
+  kg: { baseUnits: 1000n, dimension: "Mass" },
+  ml: { baseUnits: 1n, dimension: "Volume" },
+  L: { baseUnits: 1000n, dimension: "Volume" },
+  item: { baseUnits: 1n, dimension: "Count" },
+};
+
 const supportedUnits = new Set<string>(
   materialUnitGroups.flatMap((group) => group.units.map((unit) => unit.value)),
 );
 
 export function isMaterialUnit(value: string): value is MaterialUnit {
   return supportedUnits.has(value);
+}
+
+export function getMaterialUnitDefinition(unit: MaterialUnit) {
+  return unitDefinitions[unit];
+}
+
+export function getCompatibleMaterialUnits(unit: MaterialUnit) {
+  const dimension = getMaterialUnitDefinition(unit).dimension;
+  return materialUnitGroups
+    .filter((group) => group.dimension === dimension)
+    .flatMap((group) => group.units as readonly MaterialUnitOption[]);
 }
 
 export function formatMaterialQuantity(quantity: number, unit: MaterialUnit) {

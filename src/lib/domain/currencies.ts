@@ -27,3 +27,12 @@ export function formatCurrencyDecimal(amount: string, currency: CurrencyCode) {
     maximumFractionDigits: 2,
   }).format(Number(amount));
 }
+
+export function formatUnitCostDecimal(amount: string, currency: CurrencyCode) {
+  return new Intl.NumberFormat("en", {
+    style: "currency",
+    currency,
+    minimumFractionDigits: 2,
+    maximumFractionDigits: 4,
+  }).format(Number(amount));
+}

@@ -19,6 +19,7 @@ import {
 } from "@/lib/batches/mock-batches";
 import {
   formatCurrencyDecimal,
+  formatUnitCostDecimal,
   type CurrencyCode,
 } from "@/lib/domain/currencies";
 import {
@@ -171,7 +172,7 @@ export function BatchDetail({ batchId }: { batchId: string }) {
                 Cost per unit
               </dt>
               <dd className="text-lg font-semibold text-emerald-900 tabular-nums">
-                {formatCurrencyDecimal(batch.cost.unit, currency)}
+                {formatUnitCostDecimal(batch.cost.unit, currency)}
               </dd>
             </div>
           </dl>
@@ -252,7 +253,7 @@ function BatchLinesTable({
                   {line.quantity}
                 </td>
                 <td className="px-5 py-4 text-right text-sm font-semibold text-slate-950 tabular-nums">
-                  {formatCurrencyDecimal(line.lineCost, currency)}
+                  {formatUnitCostDecimal(line.lineCost, currency)}
                 </td>
               </tr>
             ))}
@@ -283,7 +284,7 @@ function BatchLinesList({
               <p className="mt-1 text-xs text-slate-500">{line.category}</p>
             </div>
             <p className="shrink-0 text-sm font-semibold text-slate-950 tabular-nums">
-              {formatCurrencyDecimal(line.lineCost, currency)}
+              {formatUnitCostDecimal(line.lineCost, currency)}
             </p>
           </div>
           <p className="mt-3 border-t border-slate-200 pt-3 text-sm text-slate-600">

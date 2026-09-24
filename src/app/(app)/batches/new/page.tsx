@@ -1,11 +1,12 @@
-import { PlaceholderPage } from "@/components/ui/placeholder-page";
+import type { Metadata } from "next";
+
+import { BatchForm } from "@/components/batches/batch-form";
+
+export const metadata: Metadata = {
+  title: "Create batch",
+  description: "Plan a production batch and calculate its material costs.",
+};
 
 export default function NewBatchPage() {
-  return (
-    <PlaceholderPage
-      eyebrow="Batches"
-      title="Create batch"
-      description="Combine materials, quantities, and fixed costs to plan a production batch."
-    />
-  );
+  return <BatchForm />;
 }

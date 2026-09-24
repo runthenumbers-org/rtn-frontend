@@ -33,6 +33,21 @@ export interface BatchViewModel {
   yield: string;
 }
 
+export interface BatchInput {
+  calculation: {
+    costPerOutputUnit: string;
+    materialSubtotal: string;
+    packagingSubtotal: string;
+    totalBatchCost: string;
+  };
+  date: string;
+  lines: readonly BatchLineViewModel[];
+  name: string;
+  notes: string;
+  output: string;
+  reference: string;
+}
+
 const returningUserBatches: readonly BatchViewModel[] = [
   {
     cost: {
@@ -263,9 +278,177 @@ const returningUserBatches: readonly BatchViewModel[] = [
 const emptyBatches: readonly BatchViewModel[] = [];
 
 export function getMockBatches(journey: "new" | "returning") {
-  return journey === "returning" ? returningUserBatches : emptyBatches;
+  const defaults =
+    journey === "returning" ? returningUserBatches : emptyBatches;
+  if (typeof window === "undefined") {
+    return defaults;
+  }
+
+  const rawValue = window.sessionStorage.getItem(storageKey(journey));
+  const cache = batchCaches[journey];
+  if (cache.rawValue === rawValue) {
+    return cache.batches;
+  }
+
+  cache.rawValue = rawValue;
+  if (!rawValue) {
+    cache.batches = defaults;
+    return cache.batches;
+  }
+
+  try {
+    const parsedValue: unknown = JSON.parse(rawValue);
+    cache.batches = isBatchCollection(parsedValue) ? parsedValue : defaults;
+  } catch {
+    cache.batches = defaults;
+  }
+  return cache.batches;
 }
 
 export function getMockBatch(batchId: string, journey: "new" | "returning") {
   return getMockBatches(journey).find((batch) => batch.id === batchId);
+}
+
+const listeners = new Set<() => void>();
+const batchCaches: Record<
+  "new" | "returning",
+  { batches: readonly BatchViewModel[]; rawValue?: string | null }
+> = {
+  new: { batches: emptyBatches },
+  returning: { batches: returningUserBatches },
+};
+
+function storageKey(journey: "new" | "returning") {
+  return `rtn:preview-batches:${journey}`;
+}
+
+function isBatchCollection(value: unknown): value is BatchViewModel[] {
+  return Array.isArray(value) && value.every(isBatch);
+}
+
+function isBatch(value: unknown): value is BatchViewModel {
+  if (!value || typeof value !== "object") return false;
+  const batch = value as Record<string, unknown>;
+  const cost = batch.cost as Record<string, unknown> | undefined;
+  return (
+    typeof batch.id === "string" &&
+    typeof batch.name === "string" &&
+    typeof batch.reference === "string" &&
+    typeof batch.date === "string" &&
+    (batch.dateLabel === "Planned date" ||
+      batch.dateLabel === "Completed date") &&
+    (batch.status === "Planned" ||
+      batch.status === "In production" ||
+      batch.status === "Completed") &&
+    typeof batch.output === "string" &&
+    typeof batch.yield === "string" &&
+    typeof batch.notes === "string" &&
+    Array.isArray(batch.lines) &&
+    batch.lines.every(isBatchLine) &&
+    !!cost &&
+    ["materials", "packaging", "production", "total", "unit"].every(
+      (key) => typeof cost[key] === "string",
+    )
+  );
+}
+
+function isBatchLine(value: unknown): value is BatchLineViewModel {
+  if (!value || typeof value !== "object") return false;
+  const line = value as Record<string, unknown>;
+  return (
+    typeof line.id === "string" &&
+    typeof line.name === "string" &&
+    typeof line.quantity === "string" &&
+    typeof line.lineCost === "string" &&
+    (line.category === "Material" ||
+      line.category === "Packaging" ||
+      line.category === "Production cost")
+  );
+}
+
+export function subscribeToMockBatches(listener: () => void) {
+  listeners.add(listener);
+  function handleStorage(event: StorageEvent) {
+    if (event.key?.startsWith("rtn:preview-batches:")) {
+      batchCaches.new.rawValue = undefined;
+      batchCaches.returning.rawValue = undefined;
+      listener();
+    }
+  }
+  window.addEventListener("storage", handleStorage);
+  return () => {
+    listeners.delete(listener);
+    window.removeEventListener("storage", handleStorage);
+  };
+}
+
+export async function saveMockBatch(
+  input: BatchInput,
+  journey: "new" | "returning",
+) {
+  if (
+    input.name.trim().length < 2 ||
+    input.reference.trim().length < 2 ||
+    !/^\d{4}-\d{2}-\d{2}$/.test(input.date) ||
+    input.lines.length === 0
+  ) {
+    throw new Error("INVALID_BATCH");
+  }
+
+  await new Promise((resolve) => window.setTimeout(resolve, 350));
+  const batches = [...getMockBatches(journey)];
+  if (
+    batches.some(
+      (batch) =>
+        batch.reference.toLocaleLowerCase() ===
+        input.reference.trim().toLocaleLowerCase(),
+    )
+  ) {
+    throw new Error("DUPLICATE_REFERENCE");
+  }
+
+  const id = createBatchId(input.name, batches);
+  const savedBatch: BatchViewModel = {
+    cost: {
+      materials: input.calculation.materialSubtotal,
+      packaging: input.calculation.packagingSubtotal,
+      production: "0.00",
+      total: input.calculation.totalBatchCost,
+      unit: input.calculation.costPerOutputUnit,
+    },
+    date: input.date,
+    dateLabel: "Planned date",
+    id,
+    lines: input.lines,
+    name: input.name.trim(),
+    notes:
+      input.notes.trim() ||
+      "Planned production batch. Costs reflect the saved formulation and current material purchase details.",
+    output: input.output,
+    reference: input.reference.trim(),
+    status: "Planned",
+    yield: "100% planned yield",
+  };
+  batches.unshift(savedBatch);
+  const rawValue = JSON.stringify(batches);
+  window.sessionStorage.setItem(storageKey(journey), rawValue);
+  batchCaches[journey] = { batches, rawValue };
+  listeners.forEach((listener) => listener());
+  return savedBatch;
+}
+
+function createBatchId(name: string, batches: readonly BatchViewModel[]) {
+  const baseId =
+    name
+      .trim()
+      .toLocaleLowerCase()
+      .replace(/[^a-z0-9]+/g, "-")
+      .replace(/^-|-$/g, "") || "batch";
+  let id = baseId;
+  let suffix = 2;
+  while (batches.some((batch) => batch.id === id)) {
+    id = `${baseId}-${suffix}`;
+    suffix += 1;
+  }
+  return id;
 }

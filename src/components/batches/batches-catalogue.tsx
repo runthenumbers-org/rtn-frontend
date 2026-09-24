@@ -12,11 +12,13 @@ import {
 import {
   batchStatuses,
   getMockBatches,
+  subscribeToMockBatches,
   type BatchStatus,
   type BatchViewModel,
 } from "@/lib/batches/mock-batches";
 import {
   formatCurrencyDecimal,
+  formatUnitCostDecimal,
   type CurrencyCode,
 } from "@/lib/domain/currencies";
 import {
@@ -46,7 +48,12 @@ export function BatchesCatalogue() {
   const [query, setQuery] = useState("");
   const [status, setStatus] = useState("all");
   const currency: CurrencyCode = workspace?.baseCurrency ?? "GBP";
-  const batches = getMockBatches(session?.journey ?? "new");
+  const journey = session?.journey ?? "new";
+  const batches = useSyncExternalStore(
+    subscribeToMockBatches,
+    () => getMockBatches(journey),
+    () => getMockBatches(journey),
+  );
 
   const filteredBatches = useMemo(() => {
     const normalizedQuery = query.trim().toLocaleLowerCase();
@@ -252,7 +259,7 @@ function BatchesTable({
                   {formatCurrencyDecimal(batch.cost.total, currency)}
                 </td>
                 <td className="px-5 py-4 text-right text-sm font-semibold text-slate-950 tabular-nums">
-                  {formatCurrencyDecimal(batch.cost.unit, currency)}
+                  {formatUnitCostDecimal(batch.cost.unit, currency)}
                 </td>
               </tr>
             ))}
@@ -322,7 +329,7 @@ function BatchesCards({
                 Cost per unit
               </dt>
               <dd className="mt-1 text-sm font-semibold text-slate-950 tabular-nums">
-                {formatCurrencyDecimal(batch.cost.unit, currency)}
+                {formatUnitCostDecimal(batch.cost.unit, currency)}
               </dd>
             </div>
           </dl>
