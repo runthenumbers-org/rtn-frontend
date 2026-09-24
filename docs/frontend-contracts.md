@@ -18,6 +18,11 @@ interface SessionUser {
 }
 ```
 
+The current mock session intentionally owns only `journey` and
+`onboardingComplete`. It does not model a user identity, email address, roles,
+tokens, password state, or account security controls. The account forms call a
+separate mock adapter and the client-side route gates read the session adapter.
+
 Expected navigation behavior:
 
 - unauthenticated application request → `/sign-in`
@@ -70,9 +75,25 @@ Rules:
 The backend must not trust catalogue membership or ownership claims from the
 browser. It must validate them independently.
 
+## Workspace settings
+
+Settings reads and updates the same active `MockWorkspace` record created by
+onboarding. The editable contract is identical to `BusinessDetailsInput`: the
+business name is trimmed and required, business type and country are optional
+catalogue values, the base currency is required, and the optional secondary
+currency must be supported and different from the base currency.
+
+The preview adapter stores the record in `sessionStorage`, publishes same-tab
+updates to workspace subscribers, and therefore updates shell naming and all
+currency-formatted screens immediately. Currency changes alter display
+formatting only; they do not convert or recalculate recorded monetary values.
+A production update must be scoped to an authorised active business, validate
+catalogue values again, persist atomically, and return the canonical updated
+business profile.
+
 ## Dashboard view model
 
-The dashboard expects one payload shaped like:
+The production dashboard should expose one payload shaped like:
 
 ```ts
 interface DashboardViewModel {
@@ -96,7 +117,9 @@ interface DashboardViewModel {
 ```
 
 Authoritative decimal values should arrive as strings. Formatting belongs to
-the presentation layer; financial arithmetic does not.
+the presentation layer; financial arithmetic does not. The preview dashboard is
+currently derived from the same mock material and batch collections as their
+catalogues so new records and counts remain coherent.
 
 An empty `recentBatches` array produces the first-time state. A populated array
 produces the recent-batches table. Counts must be scoped to the active business.
@@ -110,10 +133,10 @@ filtering are currently presentation concerns and can move to query parameters
 when the backend supports them.
 
 The batch detail payload also supplies read-only formulation, packaging, and
-production-cost lines plus an explicit cost summary. All monetary values arrive
-as authoritative decimal strings. The frontend formats those values in the
-active workspace currency but does not derive line totals, category subtotals,
-batch totals, yields, or unit costs.
+production-cost lines plus an explicit cost summary. In production, all
+monetary values must arrive as authoritative decimal strings. The detail view
+formats those saved values in the active workspace currency but does not derive
+line totals, category subtotals, batch totals, yields, or unit costs.
 
 An empty catalogue produces the first-time state. An unknown identifier produces
 the batch-not-found state without exposing storage or ownership details.

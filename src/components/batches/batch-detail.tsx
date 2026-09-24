@@ -146,7 +146,7 @@ export function BatchDetail({ batchId }: { batchId: string }) {
             Cost summary
           </h2>
           <p className="mt-1 text-sm text-slate-600">
-            Authoritative recorded values in {currency}.
+            Recorded values shown in {currency}.
           </p>
           <dl className="mt-5 divide-y divide-slate-200">
             <CostRow

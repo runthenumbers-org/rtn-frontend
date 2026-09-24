@@ -57,8 +57,8 @@ Use `npm run format` to apply the repository formatting rules.
 Reusable form and feedback patterns are documented in
 [`docs/ui-conventions.md`](docs/ui-conventions.md).
 
-The authentication, onboarding, dashboard, and error boundaries expected from
-the backend are documented in
+The authentication, workspace settings, materials, batches, calculation, and
+error boundaries expected from the backend are documented in
 [`docs/frontend-contracts.md`](docs/frontend-contracts.md).
 
 ## Route structure
@@ -88,14 +88,17 @@ src/app/
 └── page.tsx
 ```
 
-The typed route catalogue is defined in `src/lib/routes.ts`. Authentication,
-authorization, and onboarding redirects are intentionally deferred until the
-relevant product and provider decisions are made.
+The typed route catalogue is defined in `src/lib/routes.ts`. Account actions,
+route gates, onboarding completion, workspace settings, materials, and batches
+currently use isolated browser adapters backed by `sessionStorage`. They model
+the complete preview journey and persist through reloads in the same tab, but
+they are not authentication, authorization, durable storage, or a security
+boundary.
 
-The account screens currently use the isolated adapter in
-`src/lib/auth/mock-auth.ts` to exercise validation, request states, and route
-transitions. It does not create a session or protect application routes. Replace
-the adapter and add server-side route enforcement as part of RTN-005.
+The preview calculation module provides deterministic client-side estimates for
+the batch builder. A production integration must validate ownership and inputs,
+perform authoritative financial calculations on the server, and return saved
+decimal values. See `docs/frontend-contracts.md` for the replacement contracts.
 
 ## Deployment
 

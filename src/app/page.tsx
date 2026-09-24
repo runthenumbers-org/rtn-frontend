@@ -13,7 +13,7 @@ const workflow = [
     number: "02",
     title: "Plan the batch",
     description:
-      "Add materials, quantities, packaging, labour, and fixed costs in one clear workspace.",
+      "Combine priced ingredients, packaging, and target quantities in one clear workspace.",
   },
   {
     number: "03",
@@ -40,7 +40,7 @@ const capabilities = [
     label: "Pricing",
     title: "Costs you can explain",
     description:
-      "Separate materials, packaging, and fixed costs so every number has a clear origin—and every price has a rationale.",
+      "Separate ingredient and packaging costs so every saved number has a clear origin—and every price has a rationale.",
   },
 ] as const;
 
@@ -124,9 +124,9 @@ export default function Home() {
                 Know what every product costs before you make it.
               </h1>
               <p className="mt-7 max-w-xl text-lg leading-8 text-slate-700 sm:text-xl">
-                RTN turns material purchases, production quantities, packaging,
-                and overheads into a clear cost per batch—and a cost per unit
-                you can trust.
+                RTN turns material purchases and production quantities into a
+                clear estimated cost per batch—and a cost per output unit you
+                can review.
               </p>
               <div className="mt-9 flex flex-col gap-3 sm:flex-row">
                 <Link
@@ -244,8 +244,8 @@ export default function Home() {
               <article className="bg-emerald-950 p-6 sm:p-7">
                 <p className="text-lg font-semibold">Costs change</p>
                 <p className="mt-3 text-sm leading-6 text-emerald-100/75">
-                  A new supplier price should flow through to the batches that
-                  depend on it.
+                  Keep current supplier prices visible when planning the next
+                  batch without rewriting previously saved costs.
                 </p>
               </article>
               <article className="bg-emerald-950 p-6 sm:p-7">
@@ -258,8 +258,8 @@ export default function Home() {
               <article className="bg-emerald-950 p-6 sm:p-7">
                 <p className="text-lg font-semibold">Margins disappear</p>
                 <p className="mt-3 text-sm leading-6 text-emerald-100/75">
-                  Packaging and fixed costs can turn a promising price into an
-                  expensive guess.
+                  Packaging costs can turn a promising price into an expensive
+                  guess when they are not tracked alongside ingredients.
                 </p>
               </article>
             </div>

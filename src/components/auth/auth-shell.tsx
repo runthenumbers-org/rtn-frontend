@@ -37,8 +37,8 @@ export function AuthShell({ children }: { children: ReactNode }) {
             Make every batch a better-informed decision.
           </h2>
           <p className="mt-6 max-w-md text-lg leading-8 text-emerald-100/75">
-            Keep materials, production quantities, packaging, and fixed costs in
-            one practical workspace.
+            Keep material prices, production quantities, and saved batch costs
+            in one practical workspace.
           </p>
         </div>
 

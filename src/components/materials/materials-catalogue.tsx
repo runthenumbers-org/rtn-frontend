@@ -132,7 +132,7 @@ export function MaterialsCatalogue() {
               >
                 Material catalogue
               </h2>
-              <p className="mt-1 text-sm text-slate-600">
+              <p className="mt-1 text-sm text-slate-600" aria-live="polite">
                 {filteredMaterials.length} of {materials.length} materials
               </p>
             </div>

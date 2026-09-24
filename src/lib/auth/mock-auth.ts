@@ -1,3 +1,10 @@
+import { startMockSession } from "@/lib/auth/mock-session";
+import {
+  getMockWorkspaceSnapshot,
+  returningUserWorkspace,
+  saveMockWorkspace,
+} from "@/lib/onboarding/mock-workspace";
+
 export type AuthErrorCode =
   "EMAIL_IN_USE" | "INVALID_CREDENTIALS" | "UNEXPECTED";
 
@@ -32,6 +39,9 @@ export async function signIn(input: SignInInput) {
     throw new AuthError("UNEXPECTED");
   }
 
+  if (!getMockWorkspaceSnapshot()) {
+    saveMockWorkspace(returningUserWorkspace);
+  }
   startMockSession("returning");
 }
 
@@ -55,4 +65,3 @@ export async function requestPasswordReset(email: string) {
   void email;
   await pause();
 }
-import { startMockSession } from "@/lib/auth/mock-session";

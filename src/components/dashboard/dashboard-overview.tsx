@@ -5,6 +5,10 @@ import { useSyncExternalStore } from "react";
 
 import { EmptyState } from "@/components/ui/feedback";
 import {
+  batchHref,
+  BatchStatusBadge,
+} from "@/components/batches/batches-catalogue";
+import {
   getMockSessionServerSnapshot,
   getMockSessionSnapshot,
   subscribeToMockSession,
@@ -14,6 +18,14 @@ import {
   getMockDashboard,
 } from "@/lib/dashboard/mock-dashboard";
 import type { CurrencyCode } from "@/lib/domain/currencies";
+import {
+  getMockBatches,
+  subscribeToMockBatches,
+} from "@/lib/batches/mock-batches";
+import {
+  getMockMaterials,
+  subscribeToMockMaterials,
+} from "@/lib/materials/mock-materials";
 import {
   getMockWorkspaceServerSnapshot,
   getMockWorkspaceSnapshot,
@@ -39,7 +51,18 @@ export function DashboardOverview() {
     getMockWorkspaceServerSnapshot,
   );
   const currency: CurrencyCode = workspace?.baseCurrency ?? "GBP";
-  const dashboard = getMockDashboard(session?.journey ?? "new");
+  const journey = session?.journey ?? "new";
+  const materials = useSyncExternalStore(
+    subscribeToMockMaterials,
+    () => getMockMaterials(journey),
+    () => getMockMaterials(journey),
+  );
+  const batches = useSyncExternalStore(
+    subscribeToMockBatches,
+    () => getMockBatches(journey),
+    () => getMockBatches(journey),
+  );
+  const dashboard = getMockDashboard(materials, batches);
   const hasBatches = dashboard.recentBatches.length > 0;
 
   return (
@@ -130,27 +153,20 @@ export function DashboardOverview() {
                 </thead>
                 <tbody className="divide-y divide-slate-200">
                   {dashboard.recentBatches.map((batch) => (
-                    <tr key={batch.name}>
-                      <th
-                        className="px-5 py-4 text-sm font-semibold text-slate-950"
-                        scope="row"
-                      >
-                        {batch.name}
+                    <tr key={batch.id}>
+                      <th className="px-5 py-4" scope="row">
+                        <Link
+                          className="text-sm font-semibold text-slate-950 underline-offset-4 hover:text-emerald-800 hover:underline focus-visible:rounded-sm focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-emerald-700"
+                          href={batchHref(batch.id)}
+                        >
+                          {batch.name}
+                        </Link>
                       </th>
                       <td className="px-5 py-4">
-                        <span
-                          className={[
-                            "inline-flex rounded-full px-2.5 py-1 text-xs font-semibold",
-                            batch.status === "Costed"
-                              ? "bg-emerald-100 text-emerald-900"
-                              : "bg-amber-100 text-amber-900",
-                          ].join(" ")}
-                        >
-                          {batch.status}
-                        </span>
+                        <BatchStatusBadge status={batch.status} />
                       </td>
                       <td className="px-5 py-4 text-right text-sm text-slate-700">
-                        {batch.outputUnits} units
+                        {batch.output}
                       </td>
                       <td className="px-5 py-4 text-right text-sm font-medium text-slate-900">
                         {formatCurrency(batch.totalCost, currency)}
@@ -167,7 +183,7 @@ export function DashboardOverview() {
         ) : (
           <EmptyState
             title="No batches yet"
-            description="Create your first batch when you are ready to bring materials, quantities, packaging, and fixed costs together."
+            description="Create your first batch when you are ready to bring priced materials and target output together."
             action={
               <Link className={primaryActionClassName} href={routes.newBatch}>
                 Create your first batch

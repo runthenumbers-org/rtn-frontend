@@ -2,11 +2,22 @@
 
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
-import { useEffect, useRef, useState, type ReactNode } from "react";
+import {
+  useEffect,
+  useRef,
+  useState,
+  useSyncExternalStore,
+  type ReactNode,
+} from "react";
 
 import { routes } from "@/lib/routes";
 import { clearMockSession } from "@/lib/auth/mock-session";
-import { clearMockWorkspace } from "@/lib/onboarding/mock-workspace";
+import {
+  clearMockWorkspace,
+  getMockWorkspaceServerSnapshot,
+  getMockWorkspaceSnapshot,
+  subscribeToMockWorkspace,
+} from "@/lib/onboarding/mock-workspace";
 
 const navigation = [
   { href: routes.dashboard, label: "Dashboard" },
@@ -63,6 +74,11 @@ export function AppShell({ children }: AppShellProps) {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const dialogRef = useRef<HTMLDialogElement>(null);
   const menuButtonRef = useRef<HTMLButtonElement>(null);
+  const workspace = useSyncExternalStore(
+    subscribeToMockWorkspace,
+    getMockWorkspaceSnapshot,
+    getMockWorkspaceServerSnapshot,
+  );
 
   useEffect(() => {
     const dialog = dialogRef.current;
@@ -206,6 +222,9 @@ export function AppShell({ children }: AppShellProps) {
             </button>
           </div>
           <div className="mt-5">
+            <p className="mb-3 truncate px-3 text-sm font-semibold text-slate-950">
+              {workspace?.businessName ?? "Active workspace"}
+            </p>
             <WorkspaceNavigation onNavigate={closeMenu} />
           </div>
           <div className="mt-auto border-t border-slate-200 pt-5">
@@ -225,6 +244,9 @@ export function AppShell({ children }: AppShellProps) {
           <div className="sticky top-16 p-4 lg:p-6">
             <p className="px-3 text-xs font-semibold tracking-wider text-slate-500 uppercase">
               Workspace
+            </p>
+            <p className="mt-2 truncate px-3 text-sm font-semibold text-slate-950">
+              {workspace?.businessName ?? "Active workspace"}
             </p>
             <div className="mt-3">
               <WorkspaceNavigation />

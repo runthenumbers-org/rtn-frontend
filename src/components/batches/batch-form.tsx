@@ -70,6 +70,12 @@ interface FormErrors {
   reference?: string;
 }
 
+interface LineErrors {
+  material?: string;
+  quantity?: string;
+  unit?: string;
+}
+
 const secondaryActionClassName =
   "inline-flex min-h-12 w-full items-center justify-center rounded-lg border border-slate-300 bg-white px-6 font-semibold text-slate-800 transition hover:bg-slate-50 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-emerald-700 sm:w-auto";
 const emptyMaterials: readonly MaterialSummary[] = [];
@@ -128,7 +134,7 @@ function BatchFormFields({
     { id: "line-1", materialId: "", quantity: "", unit: "" },
   ]);
   const [errors, setErrors] = useState<FormErrors>({});
-  const [lineErrors, setLineErrors] = useState<Record<string, string>>({});
+  const [lineErrors, setLineErrors] = useState<Record<string, LineErrors>>({});
   const [formError, setFormError] = useState<string>();
   const [isDirty, setIsDirty] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -188,7 +194,7 @@ function BatchFormFields({
     setLines((current) =>
       current.map((line) => (line.id === id ? { ...line, ...update } : line)),
     );
-    setLineErrors((current) => ({ ...current, [id]: "" }));
+    setLineErrors((current) => ({ ...current, [id]: {} }));
     markChanged();
   }
 
@@ -219,7 +225,7 @@ function BatchFormFields({
 
   function validate() {
     const nextErrors: FormErrors = {};
-    const nextLineErrors: Record<string, string> = {};
+    const nextLineErrors: Record<string, LineErrors> = {};
     if (name.trim().length < 2)
       nextErrors.name = "Enter a batch name of at least 2 characters.";
     if (reference.trim().length < 2)
@@ -236,23 +242,26 @@ function BatchFormFields({
     const selected = new Set<string>();
     lines.forEach((line) => {
       const material = materials.find((item) => item.id === line.materialId);
-      if (!material) nextLineErrors[line.id] = "Choose a material.";
+      if (!material)
+        nextLineErrors[line.id] = { material: "Choose a material." };
       else if (selected.has(material.id))
-        nextLineErrors[line.id] = "Use each material only once.";
+        nextLineErrors[line.id] = { material: "Use each material only once." };
       else if (!line.quantity || Number(line.quantity) <= 0)
-        nextLineErrors[line.id] =
-          "Enter a required quantity greater than zero.";
+        nextLineErrors[line.id] = {
+          quantity: "Enter a required quantity greater than zero.",
+        };
       else if (
         !isMaterialUnit(line.unit) ||
         !getCompatibleMaterialUnits(material.unit).some(
           (unit) => unit.value === line.unit,
         )
       )
-        nextLineErrors[line.id] = "Choose a compatible unit.";
+        nextLineErrors[line.id] = { unit: "Choose a compatible unit." };
       else if (line.unit === "item" && !Number.isInteger(Number(line.quantity)))
-        nextLineErrors[line.id] =
-          "Count-based quantities must be whole numbers.";
-      selected.add(line.materialId);
+        nextLineErrors[line.id] = {
+          quantity: "Count-based quantities must be whole numbers.",
+        };
+      if (material) selected.add(material.id);
     });
     if (Object.keys(nextLineErrors).length)
       nextErrors.lines = "Review the highlighted formulation lines.";
@@ -529,7 +538,7 @@ function BatchFormFields({
                       </legend>
                       <div className="grid gap-4 md:grid-cols-[minmax(12rem,1fr)_minmax(8rem,.55fr)_8rem_auto] md:items-start">
                         <SelectField
-                          error={lineErrors[line.id]}
+                          error={lineErrors[line.id]?.material}
                           label="Material"
                           name={`${line.id}-material`}
                           required
@@ -560,7 +569,7 @@ function BatchFormFields({
                           ))}
                         </SelectField>
                         <TextField
-                          aria-invalid={lineErrors[line.id] ? true : undefined}
+                          error={lineErrors[line.id]?.quantity}
                           inputMode="decimal"
                           label="Required quantity"
                           min="0"
@@ -576,6 +585,7 @@ function BatchFormFields({
                           }
                         />
                         <SelectField
+                          error={lineErrors[line.id]?.unit}
                           label="Unit"
                           name={`${line.id}-unit`}
                           required
@@ -596,7 +606,7 @@ function BatchFormFields({
                         </SelectField>
                         <button
                           aria-label={`Remove formulation line ${index + 1}`}
-                          className="mt-7 inline-flex min-h-11 items-center justify-center rounded-lg border border-red-200 bg-white px-4 text-sm font-semibold text-red-800 hover:bg-red-50 disabled:cursor-not-allowed disabled:opacity-50"
+                          className="mt-7 inline-flex min-h-11 items-center justify-center rounded-lg border border-red-200 bg-white px-4 text-sm font-semibold text-red-800 transition hover:bg-red-50 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-red-700 disabled:cursor-not-allowed disabled:opacity-50"
                           disabled={lines.length === 1}
                           onClick={() => removeLine(line.id)}
                           type="button"
@@ -635,7 +645,7 @@ function BatchFormFields({
                   Cancel
                 </button>
                 <button
-                  className="inline-flex min-h-12 w-full items-center justify-center rounded-lg bg-emerald-950 px-6 font-semibold text-white hover:bg-emerald-800 disabled:cursor-wait disabled:opacity-70 sm:w-auto"
+                  className="inline-flex min-h-12 w-full items-center justify-center rounded-lg bg-emerald-950 px-6 font-semibold text-white transition hover:bg-emerald-800 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-emerald-800 disabled:cursor-wait disabled:opacity-70 sm:w-auto"
                   disabled={isSubmitting}
                   type="submit"
                 >

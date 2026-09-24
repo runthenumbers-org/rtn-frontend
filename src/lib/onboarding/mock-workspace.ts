@@ -14,6 +14,14 @@ export interface MockWorkspace {
   secondaryCurrency?: CurrencyCode;
 }
 
+export const returningUserWorkspace: MockWorkspace = {
+  baseCurrency: "GBP",
+  businessName: "Northstar Formulations",
+  businessType: "beauty-personal-care",
+  country: "GB",
+  secondaryCurrency: "EUR",
+};
+
 const storageKey = "rtn:preview-workspace";
 const listeners = new Set<() => void>();
 let cachedRawValue: string | null | undefined;

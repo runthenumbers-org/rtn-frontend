@@ -1,64 +1,51 @@
+import type { BatchViewModel } from "@/lib/batches/mock-batches";
 import type { CurrencyCode } from "@/lib/domain/currencies";
+import type { MaterialSummary } from "@/lib/materials/mock-materials";
 
 export interface RecentBatchSummary {
-  costPerUnit: number;
+  costPerUnit: string;
+  id: string;
   name: string;
-  outputUnits: number;
-  status: "Costed" | "Draft";
-  totalCost: number;
+  output: string;
+  status: BatchViewModel["status"];
+  totalCost: string;
 }
 
 export interface DashboardViewModel {
   batchCount: number;
   materialCount: number;
   recentBatches: readonly RecentBatchSummary[];
-  recordedBatchCosts: number;
+  recordedBatchCosts: string;
 }
 
-const returningUserDashboard: DashboardViewModel = {
-  batchCount: 4,
-  materialCount: 12,
-  recordedBatchCosts: 1284.4,
-  recentBatches: [
-    {
-      costPerUnit: 2.66,
-      name: "Citrus body wash",
-      outputUnits: 120,
-      status: "Costed",
-      totalCost: 318.6,
-    },
-    {
-      costPerUnit: 4.05,
-      name: "Amber candle",
-      outputUnits: 48,
-      status: "Draft",
-      totalCost: 194.4,
-    },
-    {
-      costPerUnit: 2.36,
-      name: "Oat cleansing bar",
-      outputUnits: 96,
-      status: "Costed",
-      totalCost: 226.56,
-    },
-  ],
-};
-
-const newUserDashboard: DashboardViewModel = {
-  batchCount: 0,
-  materialCount: 0,
-  recentBatches: [],
-  recordedBatchCosts: 0,
-};
-
-export function getMockDashboard(journey: "new" | "returning") {
-  return journey === "returning" ? returningUserDashboard : newUserDashboard;
+export function getMockDashboard(
+  materials: readonly MaterialSummary[],
+  batches: readonly BatchViewModel[],
+): DashboardViewModel {
+  return {
+    batchCount: batches.length,
+    materialCount: materials.length,
+    recentBatches: batches.slice(0, 3).map((batch) => ({
+      costPerUnit: batch.cost.unit,
+      id: batch.id,
+      name: batch.name,
+      output: batch.output,
+      status: batch.status,
+      totalCost: batch.cost.total,
+    })),
+    recordedBatchCosts: batches
+      .reduce((total, batch) => total + Number(batch.cost.total), 0)
+      .toFixed(2),
+  };
 }
 
-export function formatCurrency(amount: number, currency: CurrencyCode) {
+export function formatCurrency(
+  amount: number | string,
+  currency: CurrencyCode,
+) {
   return new Intl.NumberFormat("en", {
     style: "currency",
     currency,
     maximumFractionDigits: 2,
-  }).format(amount);
+  }).format(Number(amount));
 }
