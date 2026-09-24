@@ -1,11 +1,15 @@
-import { PlaceholderPage } from "@/components/ui/placeholder-page";
+import type { Metadata } from "next";
 
-export default function EditMaterialPage() {
-  return (
-    <PlaceholderPage
-      eyebrow="Materials"
-      title="Edit material"
-      description="Keep purchasing, quantity, and unit details accurate and up to date."
-    />
-  );
+import { MaterialForm } from "@/components/materials/material-form";
+
+export const metadata: Metadata = {
+  title: "Edit material",
+  description: "Update purchasing and stock details for a production material.",
+};
+
+export default async function EditMaterialPage({
+  params,
+}: PageProps<"/materials/[materialId]/edit">) {
+  const { materialId } = await params;
+  return <MaterialForm materialId={materialId} />;
 }

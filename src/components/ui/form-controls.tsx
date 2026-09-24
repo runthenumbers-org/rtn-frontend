@@ -4,6 +4,7 @@ import {
   useId,
   type InputHTMLAttributes,
   type ReactNode,
+  type Ref,
   type SelectHTMLAttributes,
   type TextareaHTMLAttributes,
 } from "react";
@@ -79,6 +80,7 @@ export interface TextFieldProps
     Omit<InputHTMLAttributes<HTMLInputElement>, "size">,
     SharedFieldProps {
   endAdornment?: ReactNode;
+  inputRef?: Ref<HTMLInputElement>;
 }
 
 export function TextField({
@@ -88,6 +90,7 @@ export function TextField({
   endAdornment,
   error,
   id: suppliedId,
+  inputRef,
   label,
   required,
   ...inputProps
@@ -112,6 +115,7 @@ export function TextField({
             .filter(Boolean)
             .join(" ")}
           id={id}
+          ref={inputRef}
           required={required}
         />
         {endAdornment ? (

@@ -11,11 +11,13 @@ import {
 } from "@/lib/auth/mock-session";
 import { formatCurrency } from "@/lib/dashboard/mock-dashboard";
 import type { CurrencyCode } from "@/lib/domain/currencies";
+import { formatMaterialQuantity } from "@/lib/domain/material-units";
 import {
   getMockMaterials,
   materialCategories,
   type MaterialStockStatus,
   type MaterialSummary,
+  subscribeToMockMaterials,
 } from "@/lib/materials/mock-materials";
 import {
   getMockWorkspaceServerSnapshot,
@@ -51,7 +53,12 @@ export function MaterialsCatalogue() {
   const [category, setCategory] = useState("all");
   const [stockStatus, setStockStatus] = useState("all");
   const currency: CurrencyCode = workspace?.baseCurrency ?? "GBP";
-  const materials = getMockMaterials(session?.journey ?? "new");
+  const journey = session?.journey ?? "new";
+  const materials = useSyncExternalStore(
+    subscribeToMockMaterials,
+    () => getMockMaterials(journey),
+    () => getMockMaterials(journey),
+  );
 
   const filteredMaterials = useMemo(() => {
     const normalizedQuery = query.trim().toLocaleLowerCase();
@@ -270,12 +277,19 @@ function MaterialsTable({
                     {formatCurrency(material.purchasePrice, currency)}
                   </span>
                   <span className="block text-xs text-slate-500">
-                    per {formatQuantity(material.packQuantity, material.unit)}
+                    per{" "}
+                    {formatMaterialQuantity(
+                      material.packQuantity,
+                      material.unit,
+                    )}
                   </span>
                 </td>
                 <td className="px-5 py-4 text-right text-sm text-slate-700">
                   <span className="font-semibold text-slate-950">
-                    {formatQuantity(material.stockQuantity, material.unit)}
+                    {formatMaterialQuantity(
+                      material.stockQuantity,
+                      material.unit,
+                    )}
                   </span>
                   <span className="mt-1 block">
                     <StockBadge status={material.stockStatus} />
@@ -334,7 +348,8 @@ function MaterialsCards({
               <dd className="mt-1 text-sm font-semibold text-slate-950">
                 {formatCurrency(material.purchasePrice, currency)}
                 <span className="block font-normal text-slate-500">
-                  per {formatQuantity(material.packQuantity, material.unit)}
+                  per{" "}
+                  {formatMaterialQuantity(material.packQuantity, material.unit)}
                 </span>
               </dd>
             </div>
@@ -343,7 +358,7 @@ function MaterialsCards({
                 Available stock
               </dt>
               <dd className="mt-1 text-sm font-semibold text-slate-950">
-                {formatQuantity(material.stockQuantity, material.unit)}
+                {formatMaterialQuantity(material.stockQuantity, material.unit)}
               </dd>
             </div>
             <div className="col-span-2">
@@ -381,16 +396,6 @@ function StockBadge({ status }: { status: MaterialStockStatus }) {
 
 function editMaterialHref(materialId: string) {
   return routes.editMaterial.replace("[materialId]", materialId);
-}
-
-function formatQuantity(quantity: number, unit: MaterialSummary["unit"]) {
-  const formattedQuantity = new Intl.NumberFormat("en", {
-    maximumFractionDigits: 2,
-  }).format(quantity);
-
-  return unit === "item"
-    ? `${formattedQuantity} ${quantity === 1 ? "item" : "items"}`
-    : `${formattedQuantity} ${unit}`;
 }
 
 function formatUpdatedDate(value: string) {

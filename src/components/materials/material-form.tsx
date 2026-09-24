@@ -1,0 +1,582 @@
+"use client";
+
+import Link from "next/link";
+import { useRouter } from "next/navigation";
+import {
+  useEffect,
+  useRef,
+  useState,
+  useSyncExternalStore,
+  type FormEvent,
+} from "react";
+
+import { FormError } from "@/components/auth/form-error";
+import {
+  ErrorState,
+  LoadingState,
+  SuccessFeedback,
+} from "@/components/ui/feedback";
+import {
+  FormActions,
+  SelectField,
+  TextField,
+} from "@/components/ui/form-controls";
+import {
+  getMockSessionServerSnapshot,
+  getMockSessionSnapshot,
+  subscribeToMockSession,
+} from "@/lib/auth/mock-session";
+import { currencies } from "@/lib/domain/currencies";
+import {
+  isMaterialUnit,
+  materialUnitGroups,
+} from "@/lib/domain/material-units";
+import {
+  deriveStockStatus,
+  getMockMaterial,
+  materialCategories,
+  saveMockMaterial,
+  type MaterialCategory,
+  type MaterialInput,
+  type MaterialSummary,
+} from "@/lib/materials/mock-materials";
+import {
+  getMockWorkspaceServerSnapshot,
+  getMockWorkspaceSnapshot,
+  subscribeToMockWorkspace,
+} from "@/lib/onboarding/mock-workspace";
+import { routes } from "@/lib/routes";
+
+interface MaterialFormProps {
+  materialId?: string;
+}
+
+interface MaterialFormErrors {
+  category?: string;
+  name?: string;
+  packQuantity?: string;
+  purchasePrice?: string;
+  stockQuantity?: string;
+  supplier?: string;
+  unit?: string;
+}
+
+const secondaryActionClassName =
+  "inline-flex min-h-12 w-full items-center justify-center rounded-lg border border-slate-300 bg-white px-6 font-semibold text-slate-800 transition hover:bg-slate-50 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-emerald-700 sm:w-auto";
+
+export function MaterialForm({ materialId }: MaterialFormProps) {
+  const session = useSyncExternalStore(
+    subscribeToMockSession,
+    getMockSessionSnapshot,
+    getMockSessionServerSnapshot,
+  );
+  const journey = session?.journey ?? "new";
+  const material = materialId
+    ? getMockMaterial(materialId, journey)
+    : undefined;
+
+  if (!session) {
+    return <LoadingState label="Loading material form" />;
+  }
+
+  if (materialId && !material) {
+    return (
+      <div className="mx-auto w-full max-w-3xl">
+        <ErrorState
+          title="Material not found"
+          description="This material may no longer be available, or the link may be incorrect. Return to the catalogue to choose another material."
+          action={
+            <Link className={secondaryActionClassName} href={routes.materials}>
+              Back to materials
+            </Link>
+          }
+        />
+      </div>
+    );
+  }
+
+  return (
+    <MaterialFormFields
+      initialMaterial={material}
+      journey={session.journey}
+      materialId={materialId}
+    />
+  );
+}
+
+interface MaterialFormFieldsProps extends MaterialFormProps {
+  initialMaterial?: MaterialSummary;
+  journey: "new" | "returning";
+}
+
+function MaterialFormFields({
+  initialMaterial,
+  journey,
+  materialId,
+}: MaterialFormFieldsProps) {
+  const router = useRouter();
+  const formRef = useRef<HTMLFormElement>(null);
+  const nameRef = useRef<HTMLInputElement>(null);
+  const workspace = useSyncExternalStore(
+    subscribeToMockWorkspace,
+    getMockWorkspaceSnapshot,
+    getMockWorkspaceServerSnapshot,
+  );
+  const currency =
+    currencies.find((option) => option.code === workspace?.baseCurrency) ??
+    currencies.find((option) => option.code === "GBP")!;
+
+  const [savedMaterialId, setSavedMaterialId] = useState<string>();
+  const [name, setName] = useState(initialMaterial?.name ?? "");
+  const [category, setCategory] = useState(initialMaterial?.category ?? "");
+  const [supplier, setSupplier] = useState(initialMaterial?.supplier ?? "");
+  const [purchasePrice, setPurchasePrice] = useState(
+    initialMaterial ? String(initialMaterial.purchasePrice) : "",
+  );
+  const [packQuantity, setPackQuantity] = useState(
+    initialMaterial ? String(initialMaterial.packQuantity) : "",
+  );
+  const [unit, setUnit] = useState(initialMaterial?.unit ?? "");
+  const [stockQuantity, setStockQuantity] = useState(
+    initialMaterial ? String(initialMaterial.stockQuantity) : "",
+  );
+  const [errors, setErrors] = useState<MaterialFormErrors>({});
+  const [formError, setFormError] = useState<string>();
+  const [isDirty, setIsDirty] = useState(false);
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [isSaved, setIsSaved] = useState(false);
+
+  useEffect(() => {
+    nameRef.current?.focus();
+  }, []);
+
+  useEffect(() => {
+    if (!isDirty) {
+      return;
+    }
+
+    function warnBeforeLeaving(event: BeforeUnloadEvent) {
+      event.preventDefault();
+      event.returnValue = "";
+    }
+
+    window.addEventListener("beforeunload", warnBeforeLeaving);
+    return () => window.removeEventListener("beforeunload", warnBeforeLeaving);
+  }, [isDirty]);
+
+  function markChanged() {
+    setIsDirty(true);
+    setIsSaved(false);
+    setFormError(undefined);
+  }
+
+  function clearError(field: keyof MaterialFormErrors) {
+    if (errors[field]) {
+      setErrors((current) => ({ ...current, [field]: undefined }));
+    }
+  }
+
+  function focusFirstInvalidField() {
+    requestAnimationFrame(() => {
+      formRef.current
+        ?.querySelector<HTMLElement>("[aria-invalid='true']")
+        ?.focus();
+    });
+  }
+
+  function leaveForm() {
+    if (
+      !isDirty ||
+      window.confirm("Leave without saving your material changes?")
+    ) {
+      setIsDirty(false);
+      router.push(routes.materials);
+    }
+  }
+
+  async function handleSubmit(event: FormEvent<HTMLFormElement>) {
+    event.preventDefault();
+    setFormError(undefined);
+    setIsSaved(false);
+
+    const nextErrors: MaterialFormErrors = {};
+    const parsedPrice = Number(purchasePrice);
+    const parsedPackQuantity = Number(packQuantity);
+    const parsedStockQuantity = Number(stockQuantity);
+
+    if (name.trim().length < 2) {
+      nextErrors.name = "Enter a material name of at least 2 characters.";
+    }
+    if (!materialCategories.includes(category as MaterialCategory)) {
+      nextErrors.category = "Choose a material category.";
+    }
+    if (supplier.trim().length < 2) {
+      nextErrors.supplier = "Enter the supplier name.";
+    }
+    if (!purchasePrice || !Number.isFinite(parsedPrice) || parsedPrice <= 0) {
+      nextErrors.purchasePrice = "Enter a purchase price greater than zero.";
+    }
+    if (
+      !packQuantity ||
+      !Number.isFinite(parsedPackQuantity) ||
+      parsedPackQuantity <= 0
+    ) {
+      nextErrors.packQuantity =
+        "Enter the quantity supplied for this purchase price.";
+    }
+    if (!isMaterialUnit(unit)) {
+      nextErrors.unit = "Choose a supported unit.";
+    }
+    if (
+      stockQuantity === "" ||
+      !Number.isFinite(parsedStockQuantity) ||
+      parsedStockQuantity < 0
+    ) {
+      nextErrors.stockQuantity = "Enter zero or the available stock quantity.";
+    }
+
+    setErrors(nextErrors);
+    if (Object.keys(nextErrors).length > 0) {
+      focusFirstInvalidField();
+      return;
+    }
+
+    if (
+      !materialCategories.includes(category as MaterialCategory) ||
+      !isMaterialUnit(unit)
+    ) {
+      return;
+    }
+
+    const input: MaterialInput = {
+      category: category as MaterialCategory,
+      name: name.trim(),
+      packQuantity: parsedPackQuantity,
+      purchasePrice: parsedPrice,
+      stockQuantity: parsedStockQuantity,
+      supplier: supplier.trim(),
+      unit,
+    };
+
+    setIsSubmitting(true);
+    try {
+      const savedMaterial = await saveMockMaterial(
+        input,
+        journey,
+        materialId ?? savedMaterialId,
+      );
+      setSavedMaterialId(savedMaterial.id);
+      setIsDirty(false);
+      setIsSaved(true);
+      window.scrollTo({ top: 0, behavior: "smooth" });
+    } catch {
+      setFormError("We couldn't save this material. Please try again.");
+    } finally {
+      setIsSubmitting(false);
+    }
+  }
+
+  const parsedPackQuantity = Number(packQuantity);
+  const parsedStockQuantity = Number(stockQuantity);
+  const stockStatus =
+    stockQuantity !== "" &&
+    packQuantity !== "" &&
+    Number.isFinite(parsedStockQuantity) &&
+    Number.isFinite(parsedPackQuantity) &&
+    parsedStockQuantity >= 0 &&
+    parsedPackQuantity > 0
+      ? deriveStockStatus(parsedStockQuantity, parsedPackQuantity)
+      : undefined;
+
+  return (
+    <div className="mx-auto w-full max-w-4xl">
+      <Link
+        className="inline-flex min-h-11 items-center text-sm font-semibold text-emerald-800 underline-offset-4 hover:underline focus-visible:rounded-sm focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-emerald-700"
+        href={routes.materials}
+        onClick={(event) => {
+          if (
+            isDirty &&
+            !window.confirm("Leave without saving your material changes?")
+          ) {
+            event.preventDefault();
+          }
+        }}
+      >
+        ← Back to materials
+      </Link>
+
+      <header className="mt-4">
+        <p className="text-sm font-bold tracking-[0.12em] text-emerald-800 uppercase">
+          Materials
+        </p>
+        <h1 className="mt-3 text-4xl font-semibold tracking-[-0.04em] text-slate-950 sm:text-5xl">
+          {materialId ? "Edit material" : "Create material"}
+        </h1>
+        <p className="mt-4 max-w-2xl text-lg leading-8 text-slate-600">
+          {materialId
+            ? "Keep purchasing and stock details current for dependable batch costs."
+            : "Record the purchasing and stock details needed for dependable batch costs."}
+        </p>
+      </header>
+
+      <div className="mt-8 grid gap-5">
+        {isSaved ? (
+          <SuccessFeedback
+            title={materialId ? "Material updated" : "Material created"}
+          >
+            {name.trim()} is saved and available in your material catalogue.
+          </SuccessFeedback>
+        ) : null}
+        {formError ? <FormError>{formError}</FormError> : null}
+      </div>
+
+      <form
+        className="mt-6 overflow-hidden rounded-xl border border-slate-200 bg-white shadow-sm"
+        noValidate
+        onSubmit={handleSubmit}
+        ref={formRef}
+      >
+        <section
+          className="p-5 sm:p-7"
+          aria-labelledby="material-details-heading"
+        >
+          <h2
+            className="text-xl font-semibold tracking-tight text-slate-950"
+            id="material-details-heading"
+          >
+            Material details
+          </h2>
+          <p className="mt-2 text-sm leading-6 text-slate-600">
+            Use the name and category your team will recognise when costing a
+            batch.
+          </p>
+
+          <div className="mt-6 grid gap-6 sm:grid-cols-2">
+            <div className="sm:col-span-2">
+              <TextField
+                autoComplete="off"
+                error={errors.name}
+                label="Material name"
+                name="name"
+                placeholder="e.g. Sweet almond oil"
+                inputRef={nameRef}
+                required
+                value={name}
+                onBlur={() => {
+                  if (name && name.trim().length < 2) {
+                    setErrors((current) => ({
+                      ...current,
+                      name: "Enter a material name of at least 2 characters.",
+                    }));
+                  }
+                }}
+                onChange={(event) => {
+                  setName(event.target.value);
+                  markChanged();
+                  clearError("name");
+                }}
+              />
+            </div>
+            <SelectField
+              error={errors.category}
+              label="Category"
+              name="category"
+              required
+              value={category}
+              onChange={(event) => {
+                setCategory(event.target.value);
+                markChanged();
+                clearError("category");
+              }}
+            >
+              <option value="">Select a category</option>
+              {materialCategories.map((option) => (
+                <option key={option} value={option}>
+                  {option}
+                </option>
+              ))}
+            </SelectField>
+            <TextField
+              autoComplete="organization"
+              error={errors.supplier}
+              label="Supplier"
+              name="supplier"
+              placeholder="e.g. The Soapery"
+              required
+              value={supplier}
+              onChange={(event) => {
+                setSupplier(event.target.value);
+                markChanged();
+                clearError("supplier");
+              }}
+            />
+          </div>
+        </section>
+
+        <section
+          className="border-t border-slate-200 p-5 sm:p-7"
+          aria-labelledby="purchasing-heading"
+        >
+          <h2
+            className="text-xl font-semibold tracking-tight text-slate-950"
+            id="purchasing-heading"
+          >
+            Purchasing
+          </h2>
+          <p className="mt-2 text-sm leading-6 text-slate-600">
+            Enter the total price and quantity for one purchased pack. Prices
+            use your workspace currency, {currency.code}.
+          </p>
+
+          <div className="mt-6 grid gap-6 sm:grid-cols-3">
+            <TextField
+              error={errors.purchasePrice}
+              inputMode="decimal"
+              label={`Purchase price (${currency.code})`}
+              min="0"
+              name="purchasePrice"
+              placeholder="0.00"
+              required
+              step="0.01"
+              type="number"
+              value={purchasePrice}
+              endAdornment={
+                <span
+                  className="px-3 text-sm font-semibold text-slate-500"
+                  aria-hidden="true"
+                >
+                  {currency.symbol}
+                </span>
+              }
+              onChange={(event) => {
+                setPurchasePrice(event.target.value);
+                markChanged();
+                clearError("purchasePrice");
+              }}
+            />
+            <TextField
+              description="Quantity included in one purchased pack."
+              error={errors.packQuantity}
+              inputMode="decimal"
+              label="Purchase quantity"
+              min="0"
+              name="packQuantity"
+              placeholder="0"
+              required
+              step="any"
+              type="number"
+              value={packQuantity}
+              onChange={(event) => {
+                setPackQuantity(event.target.value);
+                markChanged();
+                clearError("packQuantity");
+              }}
+            />
+            <SelectField
+              description="Used for both purchased and available quantities."
+              error={errors.unit}
+              label="Unit"
+              name="unit"
+              required
+              value={unit}
+              onChange={(event) => {
+                setUnit(event.target.value);
+                markChanged();
+                clearError("unit");
+              }}
+            >
+              <option value="">Select a unit</option>
+              {materialUnitGroups.map((group) => (
+                <optgroup key={group.dimension} label={group.dimension}>
+                  {group.units.map((option) => (
+                    <option key={option.value} value={option.value}>
+                      {option.label} ({option.abbreviation})
+                    </option>
+                  ))}
+                </optgroup>
+              ))}
+            </SelectField>
+          </div>
+        </section>
+
+        <section
+          className="border-t border-slate-200 p-5 sm:p-7"
+          aria-labelledby="stock-heading"
+        >
+          <h2
+            className="text-xl font-semibold tracking-tight text-slate-950"
+            id="stock-heading"
+          >
+            Available stock
+          </h2>
+          <p className="mt-2 text-sm leading-6 text-slate-600">
+            Stock status is calculated automatically from the available quantity
+            and purchase quantity.
+          </p>
+          <div className="mt-6 grid gap-6 sm:grid-cols-[minmax(0,1fr)_minmax(14rem,1fr)] sm:items-start">
+            <TextField
+              description={
+                unit
+                  ? `Enter the quantity currently available in ${unit === "item" ? "items" : unit}.`
+                  : "Choose a unit above, then enter the quantity currently available."
+              }
+              error={errors.stockQuantity}
+              inputMode="decimal"
+              label="Stock quantity"
+              min="0"
+              name="stockQuantity"
+              placeholder="0"
+              required
+              step="any"
+              type="number"
+              value={stockQuantity}
+              onChange={(event) => {
+                setStockQuantity(event.target.value);
+                markChanged();
+                clearError("stockQuantity");
+              }}
+            />
+            <div
+              className="rounded-lg border border-slate-200 bg-slate-50 p-4"
+              aria-live="polite"
+            >
+              <p className="text-sm font-medium text-slate-700">
+                Calculated stock status
+              </p>
+              <p className="mt-2 text-lg font-semibold text-slate-950">
+                {stockStatus ?? "Enter stock details"}
+              </p>
+              <p className="mt-1 text-sm leading-6 text-slate-600">
+                Zero is out of stock. Less than one purchase quantity is low
+                stock.
+              </p>
+            </div>
+          </div>
+        </section>
+
+        <div className="px-5 pb-5 sm:px-7 sm:pb-7">
+          <FormActions>
+            <button
+              className={secondaryActionClassName}
+              onClick={leaveForm}
+              type="button"
+            >
+              Cancel
+            </button>
+            <button
+              className="inline-flex min-h-12 w-full items-center justify-center rounded-lg bg-emerald-950 px-6 font-semibold text-white transition hover:bg-emerald-800 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-emerald-800 disabled:cursor-wait disabled:opacity-70 sm:w-auto"
+              disabled={isSubmitting}
+              type="submit"
+            >
+              {isSubmitting
+                ? "Saving material…"
+                : materialId || savedMaterialId
+                  ? "Save changes"
+                  : "Create material"}
+            </button>
+          </FormActions>
+        </div>
+      </form>
+    </div>
+  );
+}
