@@ -19,3 +19,11 @@ const supportedCurrencyCodes = new Set<string>(
 export function isCurrencyCode(value: string): value is CurrencyCode {
   return supportedCurrencyCodes.has(value);
 }
+
+export function formatCurrencyDecimal(amount: string, currency: CurrencyCode) {
+  return new Intl.NumberFormat("en", {
+    style: "currency",
+    currency,
+    maximumFractionDigits: 2,
+  }).format(Number(amount));
+}

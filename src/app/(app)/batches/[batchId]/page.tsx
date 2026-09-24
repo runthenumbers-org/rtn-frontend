@@ -1,11 +1,16 @@
-import { PlaceholderPage } from "@/components/ui/placeholder-page";
+import type { Metadata } from "next";
 
-export default function BatchPage() {
-  return (
-    <PlaceholderPage
-      eyebrow="Batches"
-      title="Batch details"
-      description="Review batch inputs, output assumptions, and cost information."
-    />
-  );
+import { BatchDetail } from "@/components/batches/batch-detail";
+
+export const metadata: Metadata = {
+  title: "Batch details",
+  description:
+    "Review batch output, formulation lines, and recorded production costs.",
+};
+
+export default async function BatchPage({
+  params,
+}: PageProps<"/batches/[batchId]">) {
+  const { batchId } = await params;
+  return <BatchDetail batchId={batchId} />;
 }

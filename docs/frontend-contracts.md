@@ -101,6 +101,23 @@ the presentation layer; financial arithmetic does not.
 An empty `recentBatches` array produces the first-time state. A populated array
 produces the recent-batches table. Counts must be scoped to the active business.
 
+## Batch catalogue and detail view models
+
+The batches catalogue expects records scoped to the active business, with a
+stable identifier, human-readable reference, status, planned or completed date,
+output description, yield, total cost, and cost per unit. Search and status
+filtering are currently presentation concerns and can move to query parameters
+when the backend supports them.
+
+The batch detail payload also supplies read-only formulation, packaging, and
+production-cost lines plus an explicit cost summary. All monetary values arrive
+as authoritative decimal strings. The frontend formats those values in the
+active workspace currency but does not derive line totals, category subtotals,
+batch totals, yields, or unit costs.
+
+An empty catalogue produces the first-time state. An unknown identifier produces
+the batch-not-found state without exposing storage or ownership details.
+
 ## Error response
 
 API errors should use one predictable structure:
